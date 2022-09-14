@@ -1,0 +1,32 @@
+
+# video && img
+
+*.avi
+*.mov
+*.mp4
+video/
+videos/
+
+# network weight
+*.tar
+*.pt
+
+# ros build
+build/
+devel/
+
+.vscode/
+
+CMakeLists.txt
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+
+# Logs and databases #
+######################
+
+ 
+# OS generated files #
+######################
