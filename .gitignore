@@ -6,6 +6,8 @@
 *.mp4
 video/
 videos/
+*.bag
+
 
 # network weight
 *.tar
