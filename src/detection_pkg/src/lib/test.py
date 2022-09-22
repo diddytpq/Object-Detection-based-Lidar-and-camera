@@ -20,7 +20,7 @@ from utils import setup_seed, read_points, read_calib, read_label, \
     keep_bbox_from_image_range, keep_bbox_from_lidar_range, vis_pc, \
     vis_img_3d, bbox3d2corners_camera, points_camera2image, \
     bbox_camera2lidar
-from model.custom_model import PillarLayer
+from model.custom_model import VoxelLayer
 
 
 def point_range_filter(pts, point_range=[0, -39.68, -3, 69.12, 39.68, 1]):
@@ -41,12 +41,15 @@ def point_range_filter(pts, point_range=[0, -39.68, -3, 69.12, 39.68, 1]):
 
 def main(args):
 
+    np.random.seed(22)
+
     device = torch.device("cuda:0")
-    test_layer = PillarLayer(voxel_size=[0.16, 0.16, 4],
+    test_layer = VoxelLayer(voxel_size=[0.16, 0.16, 0.16],
                             point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
                             max_voxels=16000,
                             max_num_points=32,
-                            device = device)
+                            device = device,
+                            pillar_flag = True)
 
     
     pc_folder_path = "datasimple/velodyne/"
@@ -56,18 +59,18 @@ def main(args):
     pc = point_range_filter(pc)
 
     pc_tensor = torch.from_numpy(pc).to(device)
-    voxels_th, indices_th, num_p_in_vx_th = test_layer([pc_tensor])
-    # print(voxels_th.size())
-    # print(indices_th.size())
-    # print(num_p_in_vx_th.size())
+    # voxels, coors_batch, npoints_per_voxel = test_layer([pc_tensor])
+    voxels, coors_batch, npoints_per_voxel, pillar_coors_batch = test_layer([pc_tensor])
+
+
+    print(voxels.size())
+    print(coors_batch.size())
+    print(npoints_per_voxel.size())
+    print(pillar_coors_batch.size())
 
     # # voxels_th = voxels_th.cpu().numpy()
     # # indices_th = indices_th.cpu().numpy()
     # # num_p_in_vx_th = num_p_in_vx_th.cpu().numpy()
-
-    print(voxels_th[0])
-    print(indices_th[0])
-    print(num_p_in_vx_th[0])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Configuration Parameters')
