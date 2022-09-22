@@ -39,8 +39,8 @@ CLASSES = {
         'Car': 2
         }
 LABEL2CLASSES = {v:k for k, v in CLASSES.items()}
-# pcd_limit_range = np.array([0, -40, -3, 70.4, 40, 0.0], dtype=np.float32)
-pcd_limit_range = np.array([0, -39.68, -3, 69.12, 39.68, 1], dtype=np.float32)
+pcd_limit_range = np.array([0, -40, -3, 70.4, 40, 0.0], dtype=np.float32)
+# pcd_limit_range = np.array([0, -39.68, 0, 69.12, 39.68, 3], dtype=np.float32)
 
 parser = argparse.ArgumentParser(description='Configuration Parameters')
 parser.add_argument('--ckpt', default='pretrained/epoch_160.pth', help='your checkpoint for kitti')
@@ -71,10 +71,11 @@ class Point_detector:
         
         self.model.eval()
 
-        self.frame_id = "velo_link"#"velodyne" #"camera_link"
+        # self.frame_id = "velo_link"#"velodyne" #"camera_link"
+        self.frame_id = "velodyne"#"velodyne" #"camera_link"
         
-        # rospy.Subscriber('/velodyne_points', PointCloud2, self.callback)
-        rospy.Subscriber('/kitti/velo/pointcloud', PointCloud2, self.callback)
+        rospy.Subscriber('/velodyne_points', PointCloud2, self.callback)
+        # rospy.Subscriber('/kitti/velo/pointcloud', PointCloud2, self.callback)
 
 
 
@@ -85,16 +86,18 @@ class Point_detector:
         rospy.spin()
 
     def callback(self, data):
-        # N = data.width #changed to pointcloud width
-        # pc = ros_numpy.numpify(data)
-        # points = np.zeros((N, 4)).astype(np.float32)
-        # points[:,0] = pc['x']
-        # points[:,1] = pc['y']
-        # points[:,2] = pc['z']
-        # points[:,3] = pc['intensity']
-        pc_arr=ros_numpy.point_cloud2.pointcloud2_to_array(data)
-        pc_arr = structured_to_unstructured(pc_arr)
-        self.points_data=pc_arr.reshape(-1,4)
+        N = data.width #changed to pointcloud width
+        pc = ros_numpy.numpify(data)
+        points = np.zeros((N, 4)).astype(np.float32)
+        points[:,0] = pc['x']
+        points[:,1] = pc['y']
+        points[:,2] = pc['z']
+        points[:,3] = pc['intensity']
+
+        # points=ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        # points = structured_to_unstructured(points)
+        
+        self.points_data=points.reshape(-1,4)
 
         # self.points_data = point_range_filter(points)
 
