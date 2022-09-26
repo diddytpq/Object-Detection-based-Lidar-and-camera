@@ -14,7 +14,7 @@ class _Voxelization(torch.autograd.Function):
                 coors_range,
                 max_points=35,
                 max_voxels=20000,
-                deterministic=True):
+                deterministic=False):
         """convert kitti points(N, >=3) to voxels.
         Args:
             points: [N, ndim] float tensor. points[:, :3] contain xyz points

@@ -41,11 +41,11 @@ class PillarLayer(nn.Module):
             coors_batch.append(F.pad(cur_coors, (1, 0), value=i))
         coors_batch = torch.cat(coors_batch, dim=0) # (p1 + p2 + ... + pb, 1 + 3)
 
-        return pillars, coors_batch, npoints_per_pillar
+        return pillars, coors_batch, npoints_per_pillar # (8599, 32, 4), (8599, 4), (8399)
 
 
 class PillarEncoder(nn.Module):
-    def __init__(self, voxel_size, point_cloud_range, in_channel, out_channel):
+    def __init__(self, voxel_size, point_cloud_range, in_channel, out_channel):  # in_channel= 9, out_channel = 64
         super().__init__()
         self.out_channel = out_channel
         self.vx, self.vy = voxel_size[0], voxel_size[1]
@@ -75,7 +75,7 @@ class PillarEncoder(nn.Module):
         # 3. encoder
         features = torch.cat([pillars, offset_pt_center, x_offset_pi_center, y_offset_pi_center], dim=-1) # (p1 + p2 + ... + pb, num_points, 9)
         features[:, :, 0:1] = x_offset_pi_center # tmp
-        features[:, :, 1:2] = y_offset_pi_center # tmp
+        features[:, :, 1:2] = y_offset_pi_center # tmp torch.Size([16000, 32, 9])
         # In consitent with mmdet3d. 
         # The reason can be referenced to https://github.com/open-mmlab/mmdetection3d/issues/1150
 
@@ -84,10 +84,10 @@ class PillarEncoder(nn.Module):
         voxel_ids = torch.arange(0, pillars.size(1)).to(device) # (num_points, )
         mask = voxel_ids[:, None] < npoints_per_pillar[None, :] # (num_points, p1 + p2 + ... + pb)
         mask = mask.permute(1, 0).contiguous()  # (p1 + p2 + ... + pb, num_points)
-        features *= mask[:, :, None]
+        features *= mask[:, :, None] #([16000, 32, 9])
 
         # 5. embedding
-        features = features.permute(0, 2, 1).contiguous() # (p1 + p2 + ... + pb, 9, num_points)
+        features = features.permute(0, 2, 1).contiguous() # (p1 + p2 + ... + pb, 9, num_points) #([16000, 9, 32])
         features = F.relu(self.bn(self.conv(features)))  # (p1 + p2 + ... + pb, out_channels, num_points)
         pooling_features = torch.max(features, dim=-1)[0] # (p1 + p2 + ... + pb, out_channels)
 
@@ -100,7 +100,7 @@ class PillarEncoder(nn.Module):
             cur_features = pooling_features[cur_coors_idx]
 
             canvas = torch.zeros((self.x_l, self.y_l, self.out_channel), dtype=torch.float32, device=device)
-            canvas[cur_coors[:, 1], cur_coors[:, 2]] = cur_features
+            canvas[cur_coors[:, 1], cur_coors[:, 2]] = cur_features  #canvas[x좌표, y좌표] = cur_featuress
             canvas = canvas.permute(2, 1, 0).contiguous()
             batched_canvas.append(canvas)
         batched_canvas = torch.stack(batched_canvas, dim=0) # (bs, in_channel, self.y_l, self.x_l)

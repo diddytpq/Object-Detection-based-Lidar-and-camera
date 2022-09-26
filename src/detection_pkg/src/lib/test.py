@@ -20,7 +20,7 @@ from utils import setup_seed, read_points, read_calib, read_label, \
     keep_bbox_from_image_range, keep_bbox_from_lidar_range, vis_pc, \
     vis_img_3d, bbox3d2corners_camera, points_camera2image, \
     bbox_camera2lidar
-from model.custom_model import VoxelLayer
+from model.custom_model import VoxelLayer, PillarEncoder
 
 
 def point_range_filter(pts, point_range=[0, -39.68, -3, 69.12, 39.68, 1]):
@@ -44,14 +44,19 @@ def main(args):
     np.random.seed(22)
 
     device = torch.device("cuda:0")
-    test_layer = VoxelLayer(voxel_size=[0.16, 0.16, 0.16],
+    test_layer = VoxelLayer(voxel_size=[0.16, 0.16, 4],
                             point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
-                            max_voxels=16000,
-                            max_num_points=32,
-                            device = device,
-                            pillar_flag = True)
+                            max_voxels=(16000,40000),
+                            max_num_points=32)
 
-    
+    pillar_layer = PillarEncoder(voxel_size=[0.16, 0.16, 4], 
+                                point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
+                                in_channel=9, 
+                                out_channel=64)
+
+
+    pillar_layer.to(device)
+
     pc_folder_path = "datasimple/velodyne/"
     pc_file_list = os.listdir(pc_folder_path)
     pc = read_points(pc_folder_path + "/" + pc_file_list[0])
@@ -60,13 +65,12 @@ def main(args):
 
     pc_tensor = torch.from_numpy(pc).to(device)
     # voxels, coors_batch, npoints_per_voxel = test_layer([pc_tensor])
-    voxels, coors_batch, npoints_per_voxel, pillar_coors_batch = test_layer([pc_tensor])
+    voxels, pillar_coors_batch, npoints_per_voxel = test_layer([pc_tensor])
+
+    pillar_layer(voxels, pillar_coors_batch, npoints_per_voxel)
 
 
-    print(voxels.size())
-    print(coors_batch.size())
-    print(npoints_per_voxel.size())
-    print(pillar_coors_batch.size())
+
 
     # # voxels_th = voxels_th.cpu().numpy()
     # # indices_th = indices_th.cpu().numpy()
