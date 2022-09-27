@@ -21,9 +21,9 @@ class VoxelLayer(nn.Module):
         '''
         batched_pts: list[tensor], len(batched_pts) = bs
         return: 
-               pillars: (p1 + p2 + ... + pb, num_points, c), 
-               coors_batch: (p1 + p2 + ... + pb, 1 + 3), 
-               num_points_per_pillar: (p1 + p2 + ... + pb, ), (b: batch size)
+               pillars: (p1 + p2 + ... + pb, num_points, c), (n번째 voxel, n번째 voxel의 i번째 포인트, {x,y,z,r})
+               coors_batch: (p1 + p2 + ... + pb, 1 + 3),   (n번째 voxel, {batch_id,x,y,z})
+               num_points_per_pillar: (p1 + p2 + ... + pb, ), (b: batch size) (n번째 voxel, point 개수)
         '''
         pillars, coors, npoints_per_pillar = [], [], []
         for i, pts in enumerate(batched_pts):
@@ -104,6 +104,80 @@ class PillarEncoder(nn.Module):
         batched_canvas = torch.stack(batched_canvas, dim=0) # (bs, in_channel, self.y_l, self.x_l)
 
         return batched_canvas
+
+
+class Backbone(nn.Module):
+    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]): #(in_channel=64, 
+        super().__init__()                                                             #out_channels=[64, 128, 256], layer_nums=[3, 5, 5])
+        assert len(out_channels) == len(layer_nums)
+        assert len(out_channels) == len(layer_strides)
+
+        self.multi_blocks = nn.ModuleList()
+        for i in range(len(layer_strides)):
+            blocks = []
+            blocks.append(nn.Conv2d(in_channel, out_channels[i], 3, stride=layer_strides[i], bias=False, padding=1))
+            blocks.append(nn.BatchNorm2d(out_channels[i], eps=1e-3, momentum=0.01))
+            blocks.append(nn.ReLU(inplace=True)) # inplace 하면 input으로 들어온 것 자체를 수정하겠다는 뜻. 메모리 usage가 좀 좋아짐. 
+
+            for _ in range(layer_nums[i]):
+                blocks.append(nn.Conv2d(out_channels[i], out_channels[i], 3, bias=False, padding=1))
+                blocks.append(nn.BatchNorm2d(out_channels[i], eps=1e-3, momentum=0.01))
+                blocks.append(nn.ReLU(inplace=True)) 
+ 
+            in_channel = out_channels[i]
+            self.multi_blocks.append(nn.Sequential(*blocks))
+
+        # in consitent with mmdet3d
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+
+    def forward(self, x):
+        '''
+        x: (b, c, y_l, x_l). Default: (6, 64, 496, 432)
+        return: list[]. Default: [(6, 64, 248, 216), (6, 128, 124, 108), (6, 256, 62, 54)]
+        '''
+        outs = []
+        for i in range(len(self.multi_blocks)):
+            x = self.multi_blocks[i](x)
+            outs.append(x)
+        return outs
+
+class Head(nn.Module):
+    def __init__(self, in_channel, n_anchors, n_classes): #in_channel=384, n_anchors=2*nclasses(3), n_classes=nclasses)
+        super().__init__()
+        
+        self.conv_cls = nn.Conv2d(in_channel, n_anchors*n_classes, 1)
+        self.conv_reg = nn.Conv2d(in_channel, n_anchors*7, 1)
+        self.conv_dir_cls = nn.Conv2d(in_channel, n_anchors*2, 1)
+
+        # in consitent with mmdet3d
+        conv_layer_id = 0
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.normal_(m.weight, mean=0, std=0.01)
+                if conv_layer_id == 0:
+                    prior_prob = 0.01
+                    bias_init = float(-np.log((1 - prior_prob) / prior_prob))
+                    nn.init.constant_(m.bias, bias_init)
+                else:
+                    nn.init.constant_(m.bias, 0)
+                conv_layer_id += 1
+
+    def forward(self, x):
+        '''
+        x: (bs, 384, 248, 216)
+        return: 
+              bbox_cls_pred: (bs, n_anchors*3, 248, 216) 
+              bbox_pred: (bs, n_anchors*7, 248, 216)
+              bbox_dir_cls_pred: (bs, n_anchors*2, 248, 216)
+        '''
+        bbox_cls_pred = self.conv_cls(x)
+        bbox_pred = self.conv_reg(x)
+        bbox_dir_cls_pred = self.conv_dir_cls(x)
+        
+        return bbox_cls_pred, bbox_pred, bbox_dir_cls_pred
+
 
 # if __name__ == "__main__":
 

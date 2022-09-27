@@ -99,7 +99,7 @@ class Point_detector:
         
         self.points_data=points.reshape(-1,4)
 
-        # self.points_data = point_range_filter(points)
+        self.points_data = point_range_filter(points, pcd_limit_range)
 
         pc_torch = torch.from_numpy(self.points_data)
 

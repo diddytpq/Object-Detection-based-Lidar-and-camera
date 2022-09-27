@@ -108,23 +108,23 @@ class PillarEncoder(nn.Module):
 
 
 class Backbone(nn.Module):
-    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]):
-        super().__init__()
-        assert len(out_channels) == len(layer_nums)
-        assert len(out_channels) == len(layer_strides)
+    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]): #(in_channel=64, 
+        super().__init__()                                                             #out_channels=[64, 128, 256], 
+        assert len(out_channels) == len(layer_nums)                                    #layer_nums=[3, 5, 5])
+        assert len(out_channels) == len(layer_strides)      
         
         self.multi_blocks = nn.ModuleList()
         for i in range(len(layer_strides)):
             blocks = []
             blocks.append(nn.Conv2d(in_channel, out_channels[i], 3, stride=layer_strides[i], bias=False, padding=1))
             blocks.append(nn.BatchNorm2d(out_channels[i], eps=1e-3, momentum=0.01))
-            blocks.append(nn.ReLU(inplace=True))
+            blocks.append(nn.ReLU(inplace=True)) # inplace 하면 input으로 들어온 것 자체를 수정하겠다는 뜻. 메모리 usage가 좀 좋아짐. 
 
             for _ in range(layer_nums[i]):
                 blocks.append(nn.Conv2d(out_channels[i], out_channels[i], 3, bias=False, padding=1))
                 blocks.append(nn.BatchNorm2d(out_channels[i], eps=1e-3, momentum=0.01))
-                blocks.append(nn.ReLU(inplace=True))
-
+                blocks.append(nn.ReLU(inplace=True)) 
+ 
             in_channel = out_channels[i]
             self.multi_blocks.append(nn.Sequential(*blocks))
 
@@ -145,10 +145,10 @@ class Backbone(nn.Module):
         return outs
 
 
-class Neck(nn.Module):
-    def __init__(self, in_channels, upsample_strides, out_channels):
-        super().__init__()
-        assert len(in_channels) == len(upsample_strides)
+class Neck(nn.Module): 
+    def __init__(self, in_channels, upsample_strides, out_channels):    #in_channels=[64, 128, 256], 
+        super().__init__()                                              #upsample_strides=[1, 2, 4], 
+        assert len(in_channels) == len(upsample_strides)                #out_channels=[128, 128, 128
         assert len(upsample_strides) == len(out_channels)
 
         self.decoder_blocks = nn.ModuleList()
@@ -183,7 +183,7 @@ class Neck(nn.Module):
 
 
 class Head(nn.Module):
-    def __init__(self, in_channel, n_anchors, n_classes):
+    def __init__(self, in_channel, n_anchors, n_classes): #in_channel=384, n_anchors=2*nclasses(3), n_classes=nclasses)
         super().__init__()
         
         self.conv_cls = nn.Conv2d(in_channel, n_anchors*n_classes, 1)
@@ -243,9 +243,17 @@ class PointPillars(nn.Module):
         self.head = Head(in_channel=384, n_anchors=2*nclasses, n_classes=nclasses)
         
         # anchors
+        '''
+        ranges: [[x1, y1, z1, x2, y2, z2], [x1, y1, z1, x2, y2, z2], [x1, y1, z1, x2, y2, z2]]
+        sizes: [[w, l, h], [w, l, h], [w, l, h]]
+        rotations: [0, 1.57]
+        '''
         ranges = [[0, -39.68, -0.6, 69.12, 39.68, -0.6],
                     [0, -39.68, -0.6, 69.12, 39.68, -0.6],
                     [0, -39.68, -1.78, 69.12, 39.68, -1.78]]
+        # ranges = [[0, -39.68, 0.6, 69.12, 39.68, 0.6],
+        #             [0, -39.68, 0.6, 69.12, 39.68, 0.6],
+        #             [0, -39.68, 1.78, 69.12, 39.68, 1.78]]
         sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]]
         rotations=[0, 1.57]
         self.anchors_generator = Anchors(ranges=ranges, 
@@ -277,9 +285,9 @@ class PointPillars(nn.Module):
             scores: (k, ) 
         '''
         # 0. pre-process 
-        bbox_cls_pred = bbox_cls_pred.permute(1, 2, 0).reshape(-1, self.nclasses)
-        bbox_pred = bbox_pred.permute(1, 2, 0).reshape(-1, 7)
-        bbox_dir_cls_pred = bbox_dir_cls_pred.permute(1, 2, 0).reshape(-1, 2)
+        bbox_cls_pred = bbox_cls_pred.permute(1, 2, 0).reshape(-1, self.nclasses) #(216 x 248 x n_anchors, 3) 
+        bbox_pred = bbox_pred.permute(1, 2, 0).reshape(-1, 7)                     #(216 x 248 x n_anchors, 7) 
+        bbox_dir_cls_pred = bbox_dir_cls_pred.permute(1, 2, 0).reshape(-1, 2)     #(216 x 248 x n_anchors, 2) 
         anchors = anchors.reshape(-1, 7)
         
         bbox_cls_pred = torch.sigmoid(bbox_cls_pred)

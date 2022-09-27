@@ -20,7 +20,7 @@ from utils import setup_seed, read_points, read_calib, read_label, \
     keep_bbox_from_image_range, keep_bbox_from_lidar_range, vis_pc, \
     vis_img_3d, bbox3d2corners_camera, points_camera2image, \
     bbox_camera2lidar
-from model.custom_model import VoxelLayer, PillarEncoder
+from model.custom_model import VoxelLayer, PillarEncoder, Backbone
 
 
 def point_range_filter(pts, point_range=[0, -39.68, -3, 69.12, 39.68, 1]):
@@ -54,23 +54,27 @@ def main(args):
                                 in_channel=9, 
                                 out_channel=64)
 
+    backbone_layer = Backbone(in_channel=64, 
+                                out_channels=[64, 128, 256], 
+                                layer_nums=[3, 5, 5])
 
     pillar_layer.to(device)
+    backbone_layer.to(device)
 
     pc_folder_path = "datasimple/velodyne/"
     pc_file_list = os.listdir(pc_folder_path)
     pc = read_points(pc_folder_path + "/" + pc_file_list[0])
 
     pc = point_range_filter(pc)
-
     pc_tensor = torch.from_numpy(pc).to(device)
     # voxels, coors_batch, npoints_per_voxel = test_layer([pc_tensor])
     voxels, pillar_coors_batch, npoints_per_voxel = test_layer([pc_tensor])
 
-    pillar_layer(voxels, pillar_coors_batch, npoints_per_voxel)
+    pillar_image = pillar_layer(voxels, pillar_coors_batch, npoints_per_voxel)
 
+    # print(pillar_image.size())
 
-
+    backbone_layer(pillar_image)
 
     # # voxels_th = voxels_th.cpu().numpy()
     # # indices_th = indices_th.cpu().numpy()
