@@ -28,6 +28,10 @@ CMakeLists.txt
 
 # Logs and databases #
 ######################
+src/detection_pkg/second.pytorch/second/train_model/
+src/detection_pkg/second.pytorch/second/data/ImageSets/
+src/detection_pkg/second.pytorch/second/pretrained_models_v1.5/
+
 
  
 # OS generated files #

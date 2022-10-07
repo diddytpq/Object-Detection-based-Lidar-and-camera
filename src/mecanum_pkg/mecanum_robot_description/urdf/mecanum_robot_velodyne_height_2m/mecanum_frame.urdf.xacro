@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot_frame">
+	<xacro:include filename="$(find mecanum_robot_description)/urdf/mecanum_robot_velodyne_height_2m/cycloid_gear_mecanum_wheel.urdf.xacro" />
+
+  <xacro:property name="base_offset" value="0.19458"/> <!-- 0.193608 !-->
+  
+  <xacro:property name="wheel_mass" value="0.456"/>
+  <xacro:property name="wheel_Ixx" value="0.000863585"/>
+  <xacro:property name="wheel_Ixy" value="0.0"/>
+  <xacro:property name="wheel_Ixz" value="0.0"/>
+  <xacro:property name="wheel_Iyy" value="0.000863585"/>
+  <xacro:property name="wheel_Iyz" value="0.0"/>
+  <xacro:property name="wheel_Izz" value="0.001586256"/>
+  <xacro:property name="radius" value="0.0762"/>
+  <xacro:property name="length" value="0.045"/>
+
+  <xacro:macro name="mecanum_robot">
+        <!--xacro:include filename="$(find mecanum_robot_description)/urdf/omni_manipulator.gazebo.xacro" /!-->
+    <link name="base_footprint">
+		  <visual>
+			  <origin xyz="0 0 0" rpy="0 0 0" />
+			  <geometry>
+				 <box size="0.001 0.001 0.001" />
+			  </geometry>
+		  </visual>
+		</link>
+
+		<joint name="base_footprint_joint" type="fixed">
+		  <origin xyz="0 0 ${base_offset}" rpy="0 0 0" /> <!-- ${wheel_radius} property must be defined inside wheel description -->
+		  <parent link="base_footprint"/>
+		  <child link="base_link" />
+		</joint>
+
+        <link name="base_link">
+            <visual>
+              <origin xyz="0.0 0.0 0.0" rpy="${pi/2} 0.0 ${-pi/2}"/> <!--xyz="0.0 0.0 0.0" rpy="${pi/2} 0.0 ${-pi/2}" -->
+                <geometry>
+                    <mesh filename="package://mecanum_robot_description/meshes/frame_c.stl" scale="0.001 0.001 0.001"/>         
+                </geometry>
+                <material name="white">
+                    <color rgba="1.0 1.0 1.0 1.0"/>    
+                </material>
+            </visual>
+            <collision>
+              <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="0.64 0.598 0.2"/>
+                    <!--mesh filename="package://omni_manipulator/meshes/frame_c.stl" scale="0.001 0.001 0.001"/!-->       
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="50.781" /> <!--20.781-->
+                <origin xyz="0.0 0.0 0.0" rpy="${pi/2} 0.0 ${-pi/2}"/>
+                <inertia ixx="3.9866734999999998" ixy="9.6705e-05"  ixz="0.000248215"  iyy="6.32225"  iyz="0.00284912"  izz="2.6884815" />
+            </inertial>
+        </link>
+
+        <joint name="imu_joint" type="fixed">
+          <parent link="base_link"/>
+          <child link="imu_link"/>
+          <origin xyz="0.0 0.0 0.10" rpy="0 0 0"/>
+        </joint>
+
+        <link name="imu_link"/>
+
+  <!--******************* add VLP laser Link *************************************-->
+    <joint name="VLP16_base_mount_joint" type="fixed">
+      <origin xyz="0 0.0 2" rpy="0.0 0.0 0.0"/>
+      <parent link="base_link"/>
+      <child link="VLP16_base_link"/>
+    </joint>
+
+    <link name="VLP16_base_link">
+      <inertial>
+        <mass value="0.83"/>
+        <origin xyz="0 0 0.03585"/>
+        <inertia ixx="${(0.83 * (3.0*0.0516*0.0516 + 0.0717*0.0717)) / 12.0}" ixy="0" ixz="0"
+          iyy="${(0.83 * (3.0*0.0516*0.0516 + 0.0717*0.0717)) / 12.0}" iyz="0"
+          izz="${0.5 * 0.83 * (0.0516*0.0516)}"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://velodyne_description/meshes/VLP16_base_1.dae" />
+          <!-- <box size="0.10 0.10 0.10"/> -->
+        </geometry>
+      </visual>
+      <visual>
+        <geometry>
+          <mesh filename="package://velodyne_description/meshes/VLP16_base_2.dae" />
+          <!-- <box size="0.10 0.10 0.10"/> -->
+        </geometry>
+      </visual>
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0.03585"/>
+        <geometry>
+          <cylinder radius="0.0516" length="0.0717"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="VLP16_base_scan_joint" type="fixed" >
+      <origin xyz="0 0 0.0377" rpy="0 0 0" />
+      <parent link="VLP16_base_link" />
+      <child link="velodyne"/>
+    </joint>
+
+    <link name="velodyne">
+      <inertial>
+        <mass value="0.01"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 -0.0377" />
+        <geometry>
+          <mesh filename="package://velodyne_description/meshes/VLP16_scan.dae" />
+              <!-- <box size="0.10 0.10 0.10"/> -->
+        </geometry>
+      </visual>
+    </link>
+  
+    <joint name="camera_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="camera"/>
+        <origin xyz="0.25 -0.08 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="camera">
+        <visual>
+          <origin xyz="0 0 0" rpy="1.57 0 1.57"/>
+          <geometry>
+            <box size="0.05 0.05 0.05"/>
+          </geometry>
+        </visual>
+        <collision>
+          <origin xyz="0.003 0.065 0.007" rpy="0 0 0"/>
+          <geometry>
+            <box size="0.012 0.132 0.020"/>
+          </geometry>
+        </collision>
+    </link>
+
+    </xacro:macro>
+</robot>

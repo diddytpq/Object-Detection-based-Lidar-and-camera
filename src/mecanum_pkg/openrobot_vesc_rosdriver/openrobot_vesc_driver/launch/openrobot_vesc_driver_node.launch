@@ -1,0 +1,15 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+  <!-- Parameter Setting in Here, Max. three UDEV can be used -->
+  <arg name="node_name" default="openrobot_vesc_driver_node0" />
+  <arg name="port0" default="/dev/ttyACM0" />
+  <arg name="baudrate0" default="921600bps" /> <!-- 9600bps, 115200bps, 921600bps -->
+  <arg name="no_vesc0" default="4" />
+
+<!-- OpenRobot VESC driver node -->
+  <node pkg="openrobot_vesc_driver" type="openrobot_vesc_driver_node" name="$(arg node_name)" output="screen">
+    <param name="port" value="$(arg port0)" />
+    <param name="baudrate" value="$(arg baudrate0)" />
+  </node>
+
+</launch>

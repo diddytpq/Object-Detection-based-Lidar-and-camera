@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>openrobot_vesc_msgs</name>
+  <version>0.0.1</version>
+  <description>
+    ROS interface OpenRobot Edition to the Vedder VESC open source motor controller, Originally written Michael T. Boulet (MIT)
+  </description>
+
+  <maintainer email="dongilc@mju.ac.kr">Dongil Choi</maintainer>
+  <author email="dongilc@mju.ac.kr">Dongil Choi</author>
+  <license>BSD</license>
+
+  <url type="repository">https://github.com/dongilc</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>std_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+
+  <run_depend>std_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+
+</package>

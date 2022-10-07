@@ -1,0 +1,27 @@
+<launch>
+<!-- Parameter Setting in Here, Max. three UDEV can be used -->
+  <arg name="node_name" default="openrobot_vesc_driver_node0" />
+  <arg name="port0" default="/dev/ttyACM0" />
+  <arg name="baudrate0" default="115200bps" /> <!-- 9600bps, 115200bps, 921600bps -->
+  <arg name="no_vesc0" default="4" />
+
+<!-- OpenRobot VESC driver node -->
+  <node pkg="openrobot_vesc_driver" type="openrobot_vesc_driver_node" name="$(arg node_name)" output="screen">
+    <param name="port" value="$(arg port0)" />
+    <param name="baudrate" value="$(arg baudrate0)" />
+  </node>
+
+<!-- joy node -->
+<node respawn="true" pkg="joy" type="joy_node" name="joy_teleop" output="screen">
+  <param name="dev" type="string" value="/dev/input/js0" />
+  <param name="deadzone" value="0.1" />
+</node>
+
+<!-- openrobot_control_example node -->
+  <node pkg="openrobot_control_6omni" type="openrobot_control_6omni" name="openrobot_control_6omni_node" output="screen">
+    <param name="port0" value="$(arg port0)" />
+    <param name="no_vesc0" value="$(arg no_vesc0)" />
+    <!-- <param name="port1" value="$(arg port1)" /> -->
+    <!-- <param name="port2" value="$(arg port2)" /> -->
+  </node>
+ </launch>

@@ -1,0 +1,7 @@
+2021-01-19
+- 6inch Omni-directional 모바일 플랫폼용 프로그램
+- bldc_5.02_openrobot 펌웨어 기준
+
+2021-01-23
+- Todo) DPS 제어에 Limit 함수 만들기
+- Jetson Nano 에서 자동실행프로그램 작동시키기 위한 방법 정리
