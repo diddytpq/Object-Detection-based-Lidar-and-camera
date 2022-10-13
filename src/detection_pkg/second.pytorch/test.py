@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib.recfunctions import structured_to_unstructured
 import matplotlib.pyplot as plt
 import pickle
 from pathlib import Path
@@ -19,8 +20,8 @@ from visualization_msgs.msg import Marker,MarkerArray
 
 from pyquaternion import Quaternion
 
-config_path = "/home/drcl/workspace/Object-Detection-based-Lidar-and-camera/src/detection_pkg/second.pytorch/second/train_model/all_1/pipeline.config"
-ckpt_path = "/home/drcl/workspace/Object-Detection-based-Lidar-and-camera/src/detection_pkg/second.pytorch/second/train_model/all_1/voxelnet-55710.tckpt"
+config_path = "/home/drcl/workspace/Object-Detection-based-Lidar-and-camera/src/detection_pkg/second.pytorch/second/train_model/all/pipeline.config"
+ckpt_path = "/home/drcl/workspace/Object-Detection-based-Lidar-and-camera/src/detection_pkg/second.pytorch/second/train_model/all/voxelnet-99040.tckpt"
 
 
 class Second_Detector:
@@ -42,8 +43,13 @@ class Second_Detector:
         anchors = torch.tensor(anchors, dtype=torch.float32, device=device)
         self.anchors = anchors.view(1, -1, 7)
 
-        self.frame_id = "velodyne"#"velodyne" #"camera_link"
-        rospy.Subscriber('/velodyne_points', PointCloud2, self.callback)
+        # self.frame_id = "velodyne"#"velodyne" #"camera_link"
+        self.frame_id = "velo_link"#"velodyne" #"camera_link"
+
+        # rospy.Subscriber('/velodyne_points', PointCloud2, self.callback)
+        rospy.Subscriber('/kitti/velo/pointcloud', PointCloud2, self.callback)
+
+        
 
         self.pub_bbox = rospy.Publisher("/boxes", BoundingBoxArray, queue_size=1)
 
@@ -64,19 +70,22 @@ class Second_Detector:
         return pts 
 
     def callback(self, data):
-        N = data.width #changed to pointcloud width
-        pc = ros_numpy.numpify(data)
-        points = np.zeros((N, 4)).astype(np.float32)
-        points[:,0] = pc['x']
-        points[:,1] = pc['y']
-        points[:,2] = pc['z']
-        points[:,3] = pc['intensity']
+        # N = data.width #changed to pointcloud width
+        # pc = ros_numpy.numpify(data)
+        # points = np.zeros((N, 4)).astype(np.float32)
+        # points[:,0] = pc['x']
+        # points[:,1] = pc['y']
+        # points[:,2] = pc['z']
+        # points[:,3] = pc['intensity']
+
+        points=ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        points = structured_to_unstructured(points)
 
         self.points_data=points.reshape(-1,4)
 
-        self.points_data = self.point_range_filter(points)
+        self.points_data = self.point_range_filter(self.points_data)
 
-        voxel_data = self.voxel_generator.generate(points, max_voxels=90000)
+        voxel_data = self.voxel_generator.generate(self.points_data, max_voxels=90000)
 
         voxels, coords, num_points = voxel_data['voxels'], voxel_data['coordinates'], voxel_data['num_points_per_voxel']
 

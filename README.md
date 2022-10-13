@@ -18,7 +18,7 @@
     roslaunch mecanum_robot_gazebo mecanum_velodyne.launch
 
 ## 2. Run Second
-    python src/detection_pkg/second.pytorch/src/real_lidar_pillars.py
+    python src/detection_pkg/second.pytorch/test.py
 
 ## utility
 * kitti data to rosbag
