@@ -98,20 +98,20 @@ def train(config_path,
     # PREPARE DataLoader
     ######################
 
-    dataset = input_reader_builder.build(
-        input_cfg,
-        model_cfg,
-        training=True,
-        voxel_generator=voxel_generator,
-        target_assigner=target_assigner,
-        multi_gpu=multi_gpu)
+    dataset = input_reader_builder.build(input_cfg,
+                                        model_cfg,
+                                        training=True,
+                                        voxel_generator=voxel_generator,
+                                        target_assigner=target_assigner,
+                                        multi_gpu=multi_gpu)
 
-    eval_dataset = input_reader_builder.build(
-        eval_input_cfg,
-        model_cfg,
-        training=False,
-        voxel_generator=voxel_generator,
-        target_assigner=target_assigner)
+
+    eval_dataset = input_reader_builder.build(eval_input_cfg,
+                                            model_cfg,
+                                            training=False,
+                                            voxel_generator=voxel_generator,
+                                            target_assigner=target_assigner)
+
 
     dataloader = torch.utils.data.DataLoader(dataset,
                                             batch_size=input_cfg.batch_size * num_gpu,
@@ -129,32 +129,37 @@ def train(config_path,
                                                 pin_memory=False,
                                                 collate_fn=merge_second_batch)
 
-    ######################
-    # TRAINING
-    ######################
-    t = time.time()
+    for example in dataloader:
+        print(example)
+        print(type(example))
 
-    start_step = net.get_global_step()
-    total_step = train_cfg.steps
 
-    steps_per_eval = train_cfg.steps_per_eval
-    clear_metrics_every_epoch = train_cfg.clear_metrics_every_epoch
+    # ######################
+    # # TRAINING
+    # ######################
+    # t = time.time()
 
-    amp_optimizer.zero_grad()
-    step_times = []
-    step = start_step
+    # start_step = net.get_global_step()
+    # total_step = train_cfg.steps
 
-    try:
-        while True:
-            if clear_metrics_every_epoch:
-                net.clear_metrics()
+    # steps_per_eval = train_cfg.steps_per_eval
+    # clear_metrics_every_epoch = train_cfg.clear_metrics_every_epoch
 
-            for example in dataloader:
-                lr_scheduler.step(net.get_global_step())
-                time_metrics = example["metrics"]
-                example.pop("metrics")
-                example_torch = example_convert_to_torch(example, float_dtype)
+    # amp_optimizer.zero_grad()
+    # step_times = []
+    # step = start_step
 
-                batch_size = example["anchors"].shape[0]
+    # try:
+    #     while True:
+    #         if clear_metrics_every_epoch:
+    #             net.clear_metrics()
 
-                ret_dict = net_parallel(example_torch)
+    #         for example in dataloader:
+    #             lr_scheduler.step(net.get_global_step())
+    #             time_metrics = example["metrics"]
+    #             example.pop("metrics")
+    #             example_torch = example_convert_to_torch(example, float_dtype)
+
+    #             batch_size = example["anchors"].shape[0]
+
+    #             ret_dict = net_parallel(example_torch)
