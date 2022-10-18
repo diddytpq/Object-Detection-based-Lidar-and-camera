@@ -1,5 +1,9 @@
 # Object-Detection-based-Lidar-and-camera
 
+# Install mmlab
+    https://mmdetection3d.readthedocs.io/en/stable/getting_started.html#
+
+
 # Real envs
 ## 1. Connect lidar and camera
     roslaunch velodyne_camera connect_lidar_camera.launch
