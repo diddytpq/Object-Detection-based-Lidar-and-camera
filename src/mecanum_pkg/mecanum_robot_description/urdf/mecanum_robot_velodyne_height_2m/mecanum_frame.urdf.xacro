@@ -66,7 +66,7 @@
 
   <!--******************* add VLP laser Link *************************************-->
     <joint name="VLP16_base_mount_joint" type="fixed">
-      <origin xyz="0 0.0 2" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0 0.0 0.5" rpy="0.0 0.0 0.0"/>
       <parent link="base_link"/>
       <child link="VLP16_base_link"/>
     </joint>

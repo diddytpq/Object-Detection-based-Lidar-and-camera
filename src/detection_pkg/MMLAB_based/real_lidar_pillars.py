@@ -56,9 +56,12 @@ class Point_detector:
         config = "mmdetection3d/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py"
         checkpoint = "mmdetection3d/checkpoints/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20220301_150306-37dc2420.pth"
         
-        device = "cuda:0"
+        config = "mmdetection3d/configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py"
+        checkpoint = "mmdetection3d/checkpoints/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20210826_225857-f19d00a3.pth"
 
-        data_path = "mmdetection3d/demo/data/kitti/kitti_000008.bin"
+
+        
+        device = "cuda:0"
 
         self.model = init_model(config, checkpoint, device=device)
 
@@ -77,7 +80,7 @@ class Point_detector:
     def callback(self, data):
         N = data.width #changed to pointcloud width
         pc = ros_numpy.numpify(data)
-        points = np.zeros((N, 4)).astype(np.float32)
+        points = np.zeros((N, 5)).astype(np.float32)
         points[:,0] = pc['x']
         points[:,1] = pc['y']
         points[:,2] = pc['z']
@@ -85,21 +88,25 @@ class Point_detector:
 
         # points=ros_numpy.point_cloud2.pointcloud2_to_array(data)
         # points = structured_to_unstructured(points)
-        self.points_data=points.reshape(-1,4)
+        self.points_data=points.reshape(-1,5)
 
         self.points_data = torch.from_numpy(self.points_data)
 
-        data = BasePoints(self.points_data, points_dim=4)
+        data = BasePoints(self.points_data, points_dim=5)
 
         result, data = inference_detector(self.model, data)
 
-        lidar_bboxes = result[0]['boxes_3d'].tensor.numpy() 
-        labels = result[0]['labels_3d'].numpy()
-        scores = result[0]['scores_3d'].numpy()
-        print(lidar_bboxes)
-        print(labels)
-        print(scores)
+        # lidar_bboxes = result[0]['boxes_3d'].tensor.numpy() 
+        # labels = result[0]['labels_3d'].numpy()
+        # scores = result[0]['scores_3d'].numpy()
+        # print(lidar_bboxes)
+        # print(labels)
+        # print(scores)
 
+        lidar_bboxes = result[0]["pts_bbox"]["boxes_3d"].tensor.numpy()
+        labels = result[0]['pts_bbox']['labels_3d'].numpy()
+        scores = result[0]['pts_bbox']['scores_3d'].numpy()
+        
 
         self.send_bbox_label(lidar_bboxes, labels, scores)
 
@@ -114,7 +121,7 @@ class Point_detector:
 
         for i in range(num_detects):
 
-            if scores[i] < 0.2 : continue
+            if scores[i] < 0.4 : continue
 
             bbox = BoundingBox()
             bbox.header.frame_id = self.frame_id
@@ -128,7 +135,7 @@ class Point_detector:
             bbox.dimensions.y = float(lidar_bboxes[i][4])  # length
             bbox.dimensions.z = float(lidar_bboxes[i][5])  # height
 
-            q = Quaternion(axis=(0, 0, 1), radians=float(-lidar_bboxes[i][6]))
+            q = Quaternion(axis=(0, 0, 1), radians=float(lidar_bboxes[i][6]))
             bbox.pose.orientation.x = q.x
             bbox.pose.orientation.y = q.y
             bbox.pose.orientation.z = q.z
@@ -168,7 +175,7 @@ class Point_detector:
         print("Number of detections: {}".format(num_detects))
 
         self.pub_bbox.publish(arr_bbox)
-        self.pub_text.publish(arr_score)
+        # self.pub_text.publish(arr_score)
 
 
 

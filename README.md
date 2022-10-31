@@ -9,10 +9,18 @@
     roslaunch velodyne_camera connect_lidar_camera.launch
 
 ## 2. get velodyne data using python
-    python src/detection_pkg/point_pillar/src/get_velodyne_data.py
+    python src/detection_pkg/MMLAB_based/point_pillar/src/get_velodyne_data.py
 
 ## 3. Run PointPillar
-    python src/detection_pkg/point_pillar/src/real_lidar_pillars.py
+    python src/detection_pkg/MMLAB_based/point_pillar/src/real_lidar_pillars.py
+
+    or 
+
+    python src/detection_pkg/MMLAB_based/real_lidar_pillars.py
+
+    or 
+
+    python src/detection_pkg/MMLAB_based/rosbag_pillars.py
 
 
 
@@ -23,6 +31,9 @@
 
 ## 2. Run Second
     python src/detection_pkg/second.pytorch/test.py
+
+## 3. Run Second
+    python src/detection_pkg/second.pytorch/real_lidar_pillars.py
 
 ## utility
 * kitti data to rosbag
