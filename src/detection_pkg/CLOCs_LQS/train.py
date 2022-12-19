@@ -3,6 +3,8 @@ from pathlib import Path
 from tool.dataset import clocs_data
 import argparse
 import torch
+import torch.optim as optim
+
 import datetime
 from tool import fusion,nms
 from pcdet.config import cfg, cfg_from_yaml_file
@@ -32,7 +34,7 @@ def parse_args():
                         help='index data path')
     parser.add_argument('--val-indexpath', type=str, default='./data/clocs_data/index/val.txt',
                         help='index data path')
-    parser.add_argument('--epochs', type=int, default=50,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='training epochs')
     parser.add_argument('--infopath', type=str, default='./data/clocs_data/info/kitti_infos_trainval.pkl',
                         help='index data path')
@@ -127,6 +129,7 @@ def eval(net, val_data, logf, log_path, epoch, cfg, eval_set, logger):
         eval_metric=cfg.MODEL.POST_PROCESSING.EVAL_METRIC
     )
     print(result_str, file=logf)
+    print(result_dict)
     logger.info(result_str)
     net.train()
 
@@ -182,13 +185,20 @@ if __name__ == "__main__":
         dist=False, workers=8, logger=logger, training=False
     )
 
-    fusion_layer = fusion.fusion()
+    # fusion_layer = fusion.fusion()
+    fusion_layer = fusion.custom_fusion()
     fusion_layer.cuda()
 
-    optimizer = torch.optim.Adam(fusion_layer.parameters(),lr = 3e-3, betas=(0.9, 0.99),weight_decay=0.01)
+    # optimizer = torch.optim.Adam(fusion_layer.parameters(),lr = 3e-3, betas=(0.9, 0.99),weight_decay=0.001)
+    optimizer = torch.optim.SGD(fusion_layer.parameters(), lr = 5e-5, weight_decay = 0.01, momentum = 0.9)
+    # optimizer = torch.optim.Adadelta(fusion_layer.parameters(), lr= 3e-3, rho=0.9, eps=1e-06, weight_decay=0)
+
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma= 0.99)
+    
 
     for epoch in range(args.epochs):
         train(fusion_layer, train_data, optimizer, epoch, logf)
         torch.save(fusion_layer, log_path+'/'+str(epoch)+'.pt')
         eval(fusion_layer, val_data, logf, log_path, epoch, cfg, eval_set, logger)
+        scheduler.step()
 

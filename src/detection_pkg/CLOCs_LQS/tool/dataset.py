@@ -139,7 +139,7 @@ class clocs_data(Dataset):
                                             overlaps1,
                                             tensor_index1)
         time_iou_build_end=time.time()
-        iou_test_tensor = torch.FloatTensor(iou_test)  #iou_test_tensor shape: [160000,4]
+        iou_test_tensor = torch.FloatTensor(iou_test)  #iou_test_tensor shape: [900000,4]
         tensor_index_tensor = torch.LongTensor(tensor_index)
         iou_test_tensor = iou_test_tensor.permute(1,0)
         iou_test_tensor = iou_test_tensor.reshape(4,900000)
@@ -160,7 +160,8 @@ class clocs_data(Dataset):
         all_data = torch.load(self.input_data+'/'+idx+'.pt')
         inpu_data = all_data['input_data']
         label = all_data['label']
-        fusion_input = torch.tensor(inpu_data['fusion_input']).reshape(4,1,-1)
+        # fusion_input = torch.tensor(inpu_data['fusion_input']).reshape(4,1,-1)
+        fusion_input = torch.tensor(inpu_data['fusion_input']).reshape(5,1,-1)
         tensor_index = torch.tensor(inpu_data['tensor_index']).reshape(-1,2)
         target_for_fusion = label['target_for_fusion'].reshape(-1,1)
         positive_index = label['positive_index'].reshape(-1)
@@ -182,8 +183,8 @@ class clocs_data(Dataset):
 # pang added to build the tensor for the second stage of training
 @numba.jit(nopython=True,parallel=True)
 def build_stage2_training(boxes, query_boxes, criterion, scores_3d, scores_2d, dis_to_lidar_3d,overlaps,tensor_index):
-    N = boxes.shape[0] #20000
-    K = query_boxes.shape[0] #30
+    N = boxes.shape[0] # number 2d box in 3d detector
+    K = query_boxes.shape[0] #number 2d box in 2d detector
     max_num = 900000
     ind=0
     ind_max = ind
@@ -208,7 +209,7 @@ def build_stage2_training(boxes, query_boxes, criterion, scores_3d, scores_2d, d
                         ua = qbox_area
                     else:
                         ua = 1.0
-                    overlaps[ind,0] = iw * ih / ua
+                    overlaps[ind,0] = iw * ih / ua #IOU
                     overlaps[ind,1] = scores_3d[n]
                     overlaps[ind,2] = scores_2d[k,0]
                     overlaps[ind,3] = dis_to_lidar_3d[n,0]

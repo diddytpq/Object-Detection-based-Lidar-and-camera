@@ -11,6 +11,8 @@ videos/
 
 # network weight
 *.tar
+*.tar.gz
+*.zip
 *.pt
 
 # ros build
@@ -20,6 +22,15 @@ devel/
 .vscode/
 
 CMakeLists.txt
+
+# folder
+weights/
+
+#dataset
+
+*.pkl
+
+.vscode/
 
 # Packages #
 ############
@@ -35,6 +46,8 @@ src/detection_pkg/SECOND_based/CLOCs/
 src/detection_pkg/MMLAB_based/mmdetection3d/checkpoints/
 
 src/detection_pkg/CLOCs_LQS/data/clocs_data
+src/detection_pkg/CLOCs_LQS/log/
+src/detection_pkg/CLOCs_LQS/log/second/
 
  
 # OS generated files #

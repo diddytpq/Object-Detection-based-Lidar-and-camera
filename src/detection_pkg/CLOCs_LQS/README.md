@@ -2,18 +2,6 @@
 
 CLOCs: Camera-LiDAR Object Candidates Fusion for 3D Object Detection. CLOCs is a novel Camera-LiDAR Object Candidates fusion network. This is my implementation based on Open-PCdet and MMDetection. The paper information can be found below. 
 
-```
-@article{pang2020clocs,
-  title={CLOCs: Camera-LiDAR Object Candidates Fusion for 3D Object Detection},
-  author={Pang, Su and Morris, Daniel and Radha, Hayder},
-  booktitle={2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
-  year={2020}
-  organization={IEEE}
-}
-```
-
-Thanks to the original [implementation](https://github.com/pangsu0613/CLOCs), it helps me a lot. 
-
 ### Environment
 
 ```
@@ -30,7 +18,6 @@ Add the CLOCs directory to your PYTHONPATH, just add below line to your `~/.bash
 ```bash
 export PYTHONPATH=$PYTHONPATH:'/dir/to/your/CLOCs/'
 ```
-**All data you need can be downloaded from [here](https://jbox.sjtu.edu.cn/l/U1EjFb)(or [Googledrive](https://drive.google.com/drive/folders/13h8452vcq0Wc-7p2BGMeJDpteHCDTdNs?usp=sharing)).**
 
 ### Performance
 
