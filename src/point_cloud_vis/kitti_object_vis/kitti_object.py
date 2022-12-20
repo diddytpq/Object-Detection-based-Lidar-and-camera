@@ -438,6 +438,9 @@ def show_lidar_with_depth(
 
         if float(obj.score) < 0.8 : continue 
         # Draw 3d bounding box
+
+        print(obj.t)
+
         _, box3d_pts_3d = utils.compute_box_3d(obj, calib.P)
         box3d_pts_3d_velo = calib.project_rect_to_velo(box3d_pts_3d)
 
@@ -528,7 +531,9 @@ def show_lidar_with_depth_custom(
         if obj.type == "DontCare":
             continue
 
-        if float(obj.score) < 0.2 : continue 
+        # if float(obj.score) < 0.2 : continue 
+        # if obj.t[2] < 30 : continue 
+
         # Draw 3d bounding box
         _, box3d_pts_3d = utils.compute_box_3d_custom(obj, calib.P)
         box3d_pts_3d_velo = calib.project_rect_to_velo(box3d_pts_3d)
